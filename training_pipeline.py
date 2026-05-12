@@ -1,15 +1,15 @@
+import json
 import torch
 import pandas as pd
 import torch.nn as nn
-from pathlib import Path
-from transformers import AutoModel, AutoTokenizer
-from sklearn.model_selection import train_test_split
-from torch.utils.data import Dataset, DataLoader
 from torch.optim import AdamW
+from torch.utils.data import Dataset, DataLoader
+from pathlib import Path
+import argparse
+from transformers import AutoModel, AutoTokenizer
 from transformers import get_linear_schedule_with_warmup
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score, classification_report
-import numpy as np
-import matplotlib.pyplot as plt
 
 LABEL_MAP = {"bad": 0, "medium": 1, "good": 2}
 LABEL_NAMES = ["bad", "medium", "good"]
@@ -84,7 +84,7 @@ class DrugReviewClassifier(nn.Module):
 
 def train_epoch(model, loader, optimizer, scheduler, criterion, device = "cuda"):
     model.train() # set model in training mode
-    total_loss, all_preds, all_labels = 0, [], []
+    total_loss, batch_losses, all_preds, all_labels = 0, [], [], []
 
     for batch in loader:
         # get ids, attn masks and labels for the batch
@@ -110,14 +110,16 @@ def train_epoch(model, loader, optimizer, scheduler, criterion, device = "cuda")
         scheduler.step()
 
         # update total loss and predictions
-        total_loss += loss.item()
+        loss_val = loss.item()
+        total_loss += loss_val
+        batch_losses.append(loss_val)
         all_preds.extend(torch.argmax(logits, dim=-1).cpu().numpy())
         all_labels.extend(labels.cpu().numpy())
 
     # obtain average loss and f1 for the epoch
     avg_loss = total_loss / len(loader)
     macro_f1 = f1_score(all_labels, all_preds, average="macro")
-    return avg_loss, macro_f1
+    return batch_losses, avg_loss, macro_f1
 
 
 def eval_epoch(model, loader, criterion, device):
@@ -135,7 +137,7 @@ def eval_epoch(model, loader, criterion, device):
             logits = model(input_ids, attention_mask)
             loss = criterion(logits, labels)
 
-            # 
+            # get and save predictions
             total_loss += loss.item()
             all_preds.extend(torch.argmax(logits, dim=-1).cpu().numpy())
             all_labels.extend(labels.cpu().numpy())
@@ -161,8 +163,13 @@ def train_model(
     # split train test ds
     X_train, X_test, y_train, y_test = data_split(data_path, seed)
 
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    # get model path
+    model_path = Path("/gpfs/projects/bsc14/mouhida/models/encoder") / model_name
+    
+    # load tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
 
+    # create train and test datasets
     train_dataset = DrugReviewDataset(X_train, y_train, tokenizer, max_len)
     test_dataset = DrugReviewDataset(X_test, y_test, tokenizer, max_len)
 
@@ -170,9 +177,11 @@ def train_model(
     train_loader = DataLoader(train_dataset, batch_size = batch_size, shuffle = True)
     test_loader = DataLoader(test_dataset, batch_size = batch_size, shuffle = False)
 
-    model = DrugReviewClassifier(model_name, num_labels = 3, dropout = dropout).to(device)
+    # load classifier model
+    model = DrugReviewClassifier(model_path, num_labels = 3, dropout = dropout).to(device)
     criterion = nn.CrossEntropyLoss()
 
+    # use Adam optimizer
     optimizer = AdamW(
         [
             {"params": model.encoder.parameters(), "lr": lr},
@@ -181,6 +190,7 @@ def train_model(
         weight_decay=0.01,
     )
 
+    # setup scheduler
     total_steps = len(train_loader) * epochs
     warmup_steps = int(0.1 * total_steps)
     scheduler = get_linear_schedule_with_warmup(
@@ -189,15 +199,48 @@ def train_model(
         num_training_steps = total_steps,
     )
 
+    # create dir to save model results
+    output_dir = Path(f"/gpfs/projects/bsc14/mouhida/projectIA/{model_name}")
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # save config so the run is reproducible / interpretable later
+    config = {
+        "model_name": model_name,
+        "data_path": str(data_path),
+        "seed": seed,
+        "epochs": epochs,
+        "batch_size": batch_size,
+        "lr": lr,
+        "max_len": max_len,
+        "dropout": dropout,
+    }
+    (output_dir / "config.json").write_text(json.dumps(config, indent=2))
+
     best_f1, best_state = 0, None
-    history = {"train_loss": [], "val_loss": []}
+    epoch_rows, batch_rows = [], []
+    global_step = 0
 
     for epoch in range(1, epochs + 1):
-        train_loss, train_f1 = train_epoch(model, train_loader, optimizer, scheduler, criterion, device)
+        train_batch_losses, train_loss, train_f1 = train_epoch(model, train_loader, optimizer, scheduler, criterion, device)
         val_loss, val_f1, preds, gt = eval_epoch(model, test_loader, criterion, device)
 
-        history["train_loss"].append(train_loss)
-        history["val_loss"].append(val_loss)
+        # accumulate per-batch losses with a global step counter for plotting
+        for bl in train_batch_losses:
+            global_step += 1
+            batch_rows.append({"step": global_step, "epoch": epoch, "loss": bl})
+
+        epoch_rows.append({
+            "epoch": epoch,
+            "train_loss": train_loss,
+            "val_loss": val_loss,
+            "train_f1": train_f1,
+            "val_f1": val_f1,
+            "end_step": global_step,
+        })
+
+        # rewrite CSVs each epoch so partial progress survives a crash
+        pd.DataFrame(epoch_rows).to_csv(output_dir / "epoch_metrics.csv", index=False)
+        pd.DataFrame(batch_rows).to_csv(output_dir / "batch_losses.csv", index=False)
 
         print(
             f"Epoch {epoch}/{epochs} | "
@@ -210,27 +253,32 @@ def train_model(
             best_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
             print(f"  New best model (F1={best_f1:.4f})")
 
-    # save best state
+    # load best weights and persist them
     model.load_state_dict(best_state)
-    
-    # validate on test set
-    _, _, preds, gt = eval_epoch(model, test_loader, criterion, device)
-    print("\nFinal Classification Report:")
-    print(classification_report(gt, preds, target_names=LABEL_NAMES))
+    torch.save(best_state, output_dir / "best_model.pt")
 
-    # plot loss 
-    plt.figure()
-    plt.plot(range(1, epochs + 1), history["train_loss"], label="Train loss")
-    plt.plot(range(1, epochs + 1), history["val_loss"], label="Val loss")
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-    plt.title(f"Loss — {model_name}")
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
+    # final eval on test set with the best weights
+    _, _, preds, gt = eval_epoch(model, test_loader, criterion, device)
+    report = str(classification_report(gt, preds, target_names=LABEL_NAMES))
+    (output_dir / "classification_report.txt").write_text(report)
+    print("\nFinal Classification Report:")
+    print(report)
 
     return model, tokenizer
 
 
 if __name__ == "__main__":
-    train_model()
+    
+    # obtain model_path
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model_name', help = "Name of model to be used")
+    args = parser.parse_args()
+    
+    data_path = Path("/gpfs/projects/bsc14/mouhida/projectIA/project_IA/dataset/drugsCOM_balanced.csv")
+    
+    train_model(
+        model_name = args.model_name,
+        data_path =  data_path,
+        batch_size = 64,
+        max_len = 256,
+    )
