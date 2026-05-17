@@ -1,0 +1,10 @@
+{
+  "model_name": "Bio_ClinicalBERT",
+  "data_path": "/gpfs/projects/bsc14/mouhida/projectIA/dataset/drugsCOM_balanced.csv",
+  "seed": 42,
+  "epochs": 3,
+  "batch_size": 64,
+  "lr": 2e-05,
+  "max_len": 256,
+  "dropout": 0.1
+}
