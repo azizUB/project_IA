@@ -1,0 +1,20 @@
+Running task ID 3 -> Model: sentiment-roberta-large-english 
+Using device: cuda
+Epoch 1/3 | Train loss: 0.5995  F1: 0.7407 | Val loss: 0.5167  F1: 0.7781
+  New best model (F1=0.7781)
+Epoch 2/3 | Train loss: 0.4598  F1: 0.8131 | Val loss: 0.4660  F1: 0.8130
+  New best model (F1=0.8130)
+Epoch 3/3 | Train loss: 0.3494  F1: 0.8680 | Val loss: 0.4629  F1: 0.8256
+  New best model (F1=0.8256)
+
+Final Classification Report:
+              precision    recall  f1-score   support
+
+         bad       0.87      0.84      0.86      7676
+      medium       0.73      0.77      0.75      7677
+        good       0.88      0.86      0.87      7677
+
+    accuracy                           0.82     23030
+   macro avg       0.83      0.82      0.83     23030
+weighted avg       0.83      0.82      0.83     23030
+

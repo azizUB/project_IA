@@ -1,0 +1,55 @@
+[transformers] Could not extract SentencePiece model from /gpfs/projects/bsc14/mouhida/models/encoder/deberta-v3-base/spm.model using sentencepiece library due to 
+SentencePieceExtractor requires the SentencePiece library but it was not found in your environment. Check out the instructions on the
+installation page of its repo: https://github.com/google/sentencepiece#installation and follow the ones
+that match your environment. Please note that you may need to restart your runtime after installation.
+. Falling back to TikToken extractor.
+Traceback (most recent call last):
+  File "/gpfs/projects/bsc14/mouhida/projectIA/.venv/lib/python3.12/site-packages/transformers/tokenization_utils_tokenizers.py", line 217, in convert_to_native_format
+    extractor = SentencePieceExtractor(vocab_file)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs/projects/bsc14/mouhida/projectIA/.venv/lib/python3.12/site-packages/transformers/convert_slow_tokenizer.py", line 152, in __init__
+    requires_backends(self, "sentencepiece")
+  File "/gpfs/projects/bsc14/mouhida/projectIA/.venv/lib/python3.12/site-packages/transformers/utils/import_utils.py", line 2040, in requires_backends
+    raise ImportError("".join(failed))
+ImportError: 
+SentencePieceExtractor requires the SentencePiece library but it was not found in your environment. Check out the instructions on the
+installation page of its repo: https://github.com/google/sentencepiece#installation and follow the ones
+that match your environment. Please note that you may need to restart your runtime after installation.
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/gpfs/projects/bsc14/mouhida/projectIA/.venv/lib/python3.12/site-packages/transformers/convert_slow_tokenizer.py", line 1920, in extract_vocab_merges_from_model
+    from tiktoken.load import load_tiktoken_bpe
+ModuleNotFoundError: No module named 'tiktoken'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/gpfs/projects/bsc14/mouhida/projectIA/training_pipeline.py", line 279, in <module>
+    train_model(
+  File "/gpfs/projects/bsc14/mouhida/projectIA/training_pipeline.py", line 170, in train_model
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs/projects/bsc14/mouhida/projectIA/.venv/lib/python3.12/site-packages/transformers/models/auto/tokenization_auto.py", line 837, in from_pretrained
+    return tokenizer_class.from_pretrained(pretrained_model_name_or_path, *inputs, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs/projects/bsc14/mouhida/projectIA/.venv/lib/python3.12/site-packages/transformers/tokenization_utils_base.py", line 1743, in from_pretrained
+    return cls._from_pretrained(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs/projects/bsc14/mouhida/projectIA/.venv/lib/python3.12/site-packages/transformers/tokenization_utils_base.py", line 1930, in _from_pretrained
+    init_kwargs = cls.convert_to_native_format(**init_kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs/projects/bsc14/mouhida/projectIA/.venv/lib/python3.12/site-packages/transformers/tokenization_utils_tokenizers.py", line 283, in convert_to_native_format
+    local_kwargs["tokenizer_object"] = converter.converted()
+                                       ^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs/projects/bsc14/mouhida/projectIA/.venv/lib/python3.12/site-packages/transformers/convert_slow_tokenizer.py", line 1957, in converted
+    tokenizer = self.tokenizer()
+                ^^^^^^^^^^^^^^^^
+  File "/gpfs/projects/bsc14/mouhida/projectIA/.venv/lib/python3.12/site-packages/transformers/convert_slow_tokenizer.py", line 1950, in tokenizer
+    vocab_scores, merges = self.extract_vocab_merges_from_model(self.vocab_file)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/gpfs/projects/bsc14/mouhida/projectIA/.venv/lib/python3.12/site-packages/transformers/convert_slow_tokenizer.py", line 1922, in extract_vocab_merges_from_model
+    raise ValueError(
+ValueError: `tiktoken` is required to read a `tiktoken` file. Install it with `pip install tiktoken`.

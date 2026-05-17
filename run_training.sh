@@ -2,13 +2,13 @@
 #SBATCH --job-name=review_class
 #SBATCH -D .
 #SBATCH -A bsc14
-#SBATCH --qos=acc_debug
+#SBATCH --qos=acc_bscls
 #SBATCH --output=logs/rev_%A_%a.out  # %A is master job ID, %a is array task ID
 #SBATCH --error=logs/rev_%A_%a.err
 #SBATCH --ntasks=1
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=40
-#SBATCH --time=2:00:00  
+#SBATCH --cpus-per-task=20
+#SBATCH --time=3:00:00  
 #SBATCH --array=0-3  # spawn 4 jobs at once
 
 # activate venv

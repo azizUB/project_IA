@@ -1,0 +1,15 @@
+Loading weights:   0%|          | 0/197 [00:00<?, ?it/s]Loading weights:  11%|█         | 22/197 [00:00<00:01, 109.92it/s]Loading weights:  17%|█▋        | 33/197 [00:00<00:01, 86.25it/s] Loading weights:  26%|██▌       | 51/197 [00:00<00:01, 93.06it/s]Loading weights:  33%|███▎      | 65/197 [00:00<00:01, 102.83it/s]Loading weights:  42%|████▏     | 82/197 [00:00<00:01, 111.87it/s]Loading weights:  50%|█████     | 99/197 [00:00<00:00, 108.66it/s]Loading weights:  67%|██████▋   | 132/197 [00:01<00:00, 114.65it/s]Loading weights: 100%|██████████| 197/197 [00:01<00:00, 157.31it/s]
+[transformers] [1mRobertaModel LOAD REPORT[0m from: /gpfs/projects/bsc14/mouhida/models/encoder/roberta-base
+Key                       | Status     | 
+--------------------------+------------+-
+lm_head.dense.weight      | UNEXPECTED | 
+lm_head.layer_norm.weight | UNEXPECTED | 
+lm_head.layer_norm.bias   | UNEXPECTED | 
+lm_head.bias              | UNEXPECTED | 
+lm_head.dense.bias        | UNEXPECTED | 
+pooler.dense.bias         | MISSING    | 
+pooler.dense.weight       | MISSING    | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.

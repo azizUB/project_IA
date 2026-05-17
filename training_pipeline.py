@@ -23,7 +23,7 @@ def data_split(data_path: Path, seed: int):
     y = df["label"].map(LABEL_MAP)
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=seed, stratify=y
+        X, y, test_size=0.2, random_state=seed, stratify = y
     )
 
     return X_train, X_test, y_train, y_test
@@ -274,7 +274,7 @@ if __name__ == "__main__":
     parser.add_argument('--model_name', help = "Name of model to be used")
     args = parser.parse_args()
     
-    data_path = Path("/gpfs/projects/bsc14/mouhida/projectIA/project_IA/dataset/drugsCOM_balanced.csv")
+    data_path = Path("/gpfs/projects/bsc14/mouhida/projectIA/dataset/drugsCOM_balanced.csv")
     
     train_model(
         model_name = args.model_name,

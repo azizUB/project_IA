@@ -1,0 +1,14 @@
+Loading weights:   0%|          | 0/389 [00:00<?, ?it/s]Loading weights: 100%|██████████| 389/389 [00:00<00:00, 73988.04it/s]
+[transformers] [1mRobertaModel LOAD REPORT[0m from: /gpfs/projects/bsc14/mouhida/models/encoder/sentiment-roberta-large-english
+Key                        | Status     | 
+---------------------------+------------+-
+classifier.out_proj.bias   | UNEXPECTED | 
+classifier.dense.weight    | UNEXPECTED | 
+classifier.out_proj.weight | UNEXPECTED | 
+classifier.dense.bias      | UNEXPECTED | 
+pooler.dense.weight        | MISSING    | 
+pooler.dense.bias          | MISSING    | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
