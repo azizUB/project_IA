@@ -1,6 +1,5 @@
 {
   "model_name": "roberta-base",
-  "data_path": "dataset\\drugsCOM_balanced.csv",
   "seed": 42,
   "epochs": 3,
   "batch_size": 64,
